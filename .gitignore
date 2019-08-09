@@ -1,6 +1,7 @@
 ##
 archivedData/
-
+testData/
+docs/
 # Compiled class file
 *.class
 
