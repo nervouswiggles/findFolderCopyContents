@@ -1,16 +1,21 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 
 /**
  * @author Daniel Redfern (redentity.io)
- * @version 1.1
+ * @version 1.3
+ * @changes Included the remove of unwanted Log files
  */
 public class copyFolderContents extends SimpleFileVisitor<Path> {
 
@@ -20,7 +25,7 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 	static Integer numberOfFile;
 	private static String originalFolderPath;
 	private static String folderName;
-	
+	 
 	public static void main(String[] args) throws IOException {	
 		
 		System.out.println("Current location to start searching for file : " + System.getProperty("user.dir"));
@@ -55,8 +60,10 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 				}
 			}
 			
-			for(int y=1;y<Integer.parseInt(args[1])+1;++y)
-				cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)), folderName, Integer.parseInt(args[1]));
+			for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
+				String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
+				cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
+			}
 			
 		}else {
 			System.out.println("Unable to locate the folder : "+folderName);
@@ -81,25 +88,39 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 			}
 		}
 	}
+	
+	
 
 	/**
 	 * @param dir The current directory to review for files with LOG+args[0]
 	 * @description Used to cleanup the copied log files based on the passed variable
 	 */
-	public static void cleanUpLogFiles(File dir, String folderName, Integer originalNumber) throws IOException {
+	//public static void cleanUpLogFiles(File dir, String folderName, Integer originalNumber) throws IOException {
+	public static void cleanUpLogFiles(File dir,String parentFolder) throws IOException {
 		File[] files = dir.listFiles();
+		
+		
 		for (File file : files) {
-			
 			if(file.isFile()) {
-				String fileName = file.getName().toString();
-				String regex = "(.*Log([0-9]*))";
+				String fileName = file.getName().toString();				
+				
+				final String regex = "(.*Log([1-9]*).*)";
+				
 				if (fileName.matches(regex)) {
-					if(!fileName.endsWith("Log"+originalNumber)) {
+					
+					String[] parts = stripExtension(fileName).split("Log");
+					String[] folderParts = parentFolder.split("_");
+					
+					String x1 = new String(folderParts[folderParts.length-1].toString());
+					String x2 = new String("0"+parts[parts.length-1].toString());
+					String x3 = new String(parts[parts.length-1].toString());
+					
+					if(!(x1.equals(x2)||x1.equals(x3))) {
 						new File(dir.getAbsolutePath()+"/"+fileName).delete();
 					}
 				}
 			} else if (file.isDirectory()) {
-				cleanUpLogFiles(file,folderName,originalNumber);
+				cleanUpLogFiles(file,parentFolder);
 			}
 		}		
 	}
@@ -121,6 +142,7 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 			}
 		}		
 	}
+	
 	
 	@Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
@@ -148,6 +170,15 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
         return FileVisitResult.CONTINUE;
     }
     
-	
-	
+    static String stripExtension (String str) {
+        if (str == null) 
+        	return null;
+        
+        int pos = str.lastIndexOf(".");
+        if (pos == -1) 
+        	return str;
+
+        return str.substring(0, pos);
+    }
+
 }
