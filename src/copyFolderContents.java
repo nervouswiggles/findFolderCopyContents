@@ -1,21 +1,18 @@
-
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Arrays;
-
 
 /**
  * @author Daniel Redfern (redentity.io)
- * @version 1.3
+ * @version 1.4
  * @changes Included the remove of unwanted Log files
+ * @changes Included 'master' folder function
  */
 public class copyFolderContents extends SimpleFileVisitor<Path> {
 
@@ -25,52 +22,88 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 	static Integer numberOfFile;
 	private static String originalFolderPath;
 	private static String folderName;
+	private final static String[] masterOptions = {"master","Master","MASTER"};
 	 
-	public static void main(String[] args) throws IOException {	
-		
+	
+	public static void main(String[] args) throws IOException {		
 		System.out.println("Current location to start searching for file : " + System.getProperty("user.dir"));
 		
-		if(args.length != 2)
+		isarrayLengthOK(args.length);
+		folderName = args[0];
+		numberOfFile = Integer.parseInt(args[1]);
+
+		
+		if(Arrays.asList(masterOptions).contains(args[0])){
+            System.out.println("Master entered!!!");
+            //TODO find in current directory folders that start with gemJava8_Mode
+            //TODO for every folder, iterate through and copy contents            
+            File f = new File("."); 
+            File[] files = f.listFiles();
+    			for (File file : files) {
+    				if (file.isDirectory()) {
+    					if(file.getName().toLowerCase().startsWith("gemjava8_mode")) {
+    						originalFolderPath = file.getCanonicalPath();
+    						for(int y=1;y<numberOfFile+1;++y) { 
+            					sourceDir = Paths.get(originalFolderPath);
+            					targetDir = Paths.get(originalFolderPath+"_"+String.format("%02d", y)); // Ensures the number starts with at least 2 digits
+            					System.out.println("Attempting to create folder:"+originalFolderPath+"_"+String.format("%02d", y));
+            					Files.walkFileTree(sourceDir, new copyFolderContents(sourceDir, targetDir));						
+            				}
+    						
+    						for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
+    	        					String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
+    	        					cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
+    	        				}
+    						
+    					}
+    				}
+    			}
+            
+        }else {
+        		// Uses the current location then attempts to locate the folder path
+        		// If located, it will update the originalFolderPath variable
+        		displayDirectoryContentsWithFolderName(new File("."), folderName);
+        		// Makes sure the path was located
+        		if(originalFolderPath!=null) {			
+
+        			//Ensures the value passed is a number
+        			if(numberOfFile instanceof Integer) { 
+
+        				for(int y=1;y<numberOfFile+1;++y) { 
+        					sourceDir = Paths.get(originalFolderPath);
+        					targetDir = Paths.get(originalFolderPath+"_"+String.format("%02d", y)); // Ensures the number starts with at least 2 digits
+        					System.out.println("Attempting to create folder:"+originalFolderPath+"_"+String.format("%02d", y));
+        					Files.walkFileTree(sourceDir, new copyFolderContents(sourceDir, targetDir));						
+        				}
+        			}
+        			
+        			for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
+        				String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
+        				cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
+        			}
+        			
+        		}else {
+        			System.out.println("Unable to locate the folder : "+folderName);
+        		}
+        }	
+	}
+	
+	
+	/*
+	 * Check the arguments passed
+	 */
+	private static void isarrayLengthOK(int length) {
+		if(length != 2)
 	    {
 	        System.out.println("Oops, looks like there isn't EXACTLY 2 values passed");
 	        System.out.println("It should look like <folderName> <Number>");
 	        System.out.println("Note: If the folder name has a space, ensure it's encapsulated with double quote");
 	        System.out.println("When executing the command, pass the two arguments like this --> \"Folder name\" 12");	        
 	        System.exit(0);
-	    }
-		
-		folderName = args[0];
-		numberOfFile = Integer.parseInt(args[1]);
-		
-		// Uses the current location then attempts to locate the folder path
-		// If located, it will update the originalFolderPath variable
-		displayDirectoryContentsWithFolderName(new File("."), folderName); 
-		
-		// Makes sure the path was located
-		if(originalFolderPath!=null) {			
-
-			//Ensures the value passed is a number
-			if(numberOfFile instanceof Integer) { 
-
-				for(int y=1;y<numberOfFile+1;++y) { 
-					sourceDir = Paths.get(originalFolderPath);
-					targetDir = Paths.get(originalFolderPath+"_"+String.format("%02d", y)); // Ensures the number starts with at least 2 digits
-					System.out.println("Attempting to create folder:"+originalFolderPath+"_"+String.format("%02d", y));
-					Files.walkFileTree(sourceDir, new copyFolderContents(sourceDir, targetDir));						
-				}
-			}
-			
-			for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
-				String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
-				cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
-			}
-			
-		}else {
-			System.out.println("Unable to locate the folder : "+folderName);
-		}
+	    }		
 	}
-	
-	
+
+
 	public copyFolderContents(Path sourceDir, Path targetDir) {
         copyFolderContents.sourceDir = sourceDir;
         copyFolderContents.targetDir = targetDir;
@@ -125,7 +158,10 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 		}		
 	}
 	
-
+	public static void findMasterFolders(File dir, String folderName) throws IOException {
+		
+	}
+	
 	public static void displayDirectoryContentsWithFolderName(File dir, String folderName) throws IOException {
 		File[] files = dir.listFiles();
 		for (File file : files) {
