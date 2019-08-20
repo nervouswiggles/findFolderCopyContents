@@ -6,11 +6,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 
 /**
  * @author Daniel Redfern (redentity.io)
- * @version 1.4
+ * @version 1.5
  * @changes Included the remove of unwanted Log files
  * @changes Included 'master' folder function
  */
@@ -66,7 +65,6 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
     			System.out.println("Unable to locate the folder : "+folderName);
     		}
     }	
-	//}
 	
 	
 	/*
