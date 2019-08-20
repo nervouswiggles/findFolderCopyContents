@@ -3,6 +3,7 @@ archivedData/
 testData/
 docs/
 zzz/
+testing/
 logFilesAreInHere/*
 # Compiled class file
 *.class

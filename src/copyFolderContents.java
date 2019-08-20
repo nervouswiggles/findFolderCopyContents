@@ -22,8 +22,6 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 	static Integer numberOfFile;
 	private static String originalFolderPath;
 	private static String folderName;
-	private final static String[] masterOptions = {"master","Master","MASTER"};
-	 
 	
 	public static void main(String[] args) throws IOException {		
 		System.out.println("Current location to start searching for file : " + System.getProperty("user.dir"));
@@ -33,60 +31,42 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 		numberOfFile = Integer.parseInt(args[1]);
 
 		
-		if(Arrays.asList(masterOptions).contains(args[0])){
-            System.out.println("Master entered!!!");
-            //TODO find in current directory folders that start with gemJava8_Mode
-            //TODO for every folder, iterate through and copy contents            
-            File f = new File("."); 
-            File[] files = f.listFiles();
+		displayDirectoryContentsWithFolderName(new File("."), folderName);
+
+    		if(originalFolderPath!=null) {			
+
+    			File f = new File(originalFolderPath);
+    			File[] files = f.listFiles();
     			for (File file : files) {
     				if (file.isDirectory()) {
     					if(file.getName().toLowerCase().startsWith("gemjava8_mode")) {
-    						originalFolderPath = file.getCanonicalPath();
-    						for(int y=1;y<numberOfFile+1;++y) { 
-            					sourceDir = Paths.get(originalFolderPath);
-            					targetDir = Paths.get(originalFolderPath+"_"+String.format("%02d", y)); // Ensures the number starts with at least 2 digits
-            					System.out.println("Attempting to create folder:"+originalFolderPath+"_"+String.format("%02d", y));
-            					Files.walkFileTree(sourceDir, new copyFolderContents(sourceDir, targetDir));						
-            				}
     						
-    						for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
-    	        					String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
-    	        					cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
-    	        				}
+    						originalFolderPath = file.getAbsolutePath();
+    						
+    						if(numberOfFile instanceof Integer) { 
+
+	    		    				for(int y=1;y<numberOfFile+1;++y) { 
+	    		    					sourceDir = Paths.get(originalFolderPath);
+	    		    					targetDir = Paths.get(originalFolderPath+"_"+String.format("%02d", y)); // Ensures the number starts with at least 2 digits
+	    		    					System.out.println("Attempting to create folder:"+originalFolderPath+"_"+String.format("%02d", y));
+	    		    					Files.walkFileTree(sourceDir, new copyFolderContents(sourceDir, targetDir));						
+	    		    				}
+    		    				}
+    		    			
+	    		    			for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
+	    		    				String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
+	    		    				cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
+	    		    			}
     						
     					}
     				}
     			}
-            
-        }else {
-        		// Uses the current location then attempts to locate the folder path
-        		// If located, it will update the originalFolderPath variable
-        		displayDirectoryContentsWithFolderName(new File("."), folderName);
-        		// Makes sure the path was located
-        		if(originalFolderPath!=null) {			
 
-        			//Ensures the value passed is a number
-        			if(numberOfFile instanceof Integer) { 
-
-        				for(int y=1;y<numberOfFile+1;++y) { 
-        					sourceDir = Paths.get(originalFolderPath);
-        					targetDir = Paths.get(originalFolderPath+"_"+String.format("%02d", y)); // Ensures the number starts with at least 2 digits
-        					System.out.println("Attempting to create folder:"+originalFolderPath+"_"+String.format("%02d", y));
-        					Files.walkFileTree(sourceDir, new copyFolderContents(sourceDir, targetDir));						
-        				}
-        			}
-        			
-        			for(int y=1;y<Integer.parseInt(args[1])+1;++y) {
-        				String[] items = new String(originalFolderPath+"_"+ String.format("%02d", y)).replace("\\","\\\\").split("\\\\");
-        				cleanUpLogFiles(new File(originalFolderPath+"_"+ String.format("%02d", y)),items[items.length-1]);
-        			}
-        			
-        		}else {
-        			System.out.println("Unable to locate the folder : "+folderName);
-        		}
-        }	
-	}
+    		}else {
+    			System.out.println("Unable to locate the folder : "+folderName);
+    		}
+    }	
+	//}
 	
 	
 	/*
@@ -158,10 +138,15 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 		}		
 	}
 	
-	public static void findMasterFolders(File dir, String folderName) throws IOException {
-		
-	}
 	
+	
+	
+	/**
+	 * 
+	 * @param dir
+	 * @param folderName
+	 * @throws IOException
+	 */
 	public static void displayDirectoryContentsWithFolderName(File dir, String folderName) throws IOException {
 		File[] files = dir.listFiles();
 		for (File file : files) {
@@ -174,10 +159,12 @@ public class copyFolderContents extends SimpleFileVisitor<Path> {
 				
 				if(folderName.equals(file.getName())) {
 					originalFolderPath = file.getCanonicalPath();
+					
 				}
 			}
 		}		
 	}
+	
 	
 	
 	@Override
